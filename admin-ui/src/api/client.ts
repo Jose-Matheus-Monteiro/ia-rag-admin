@@ -69,6 +69,8 @@ export const api = {
 
   publishNode: (id: string) => request<unknown>(`/nodes/${id}/publish`, { method: 'POST' }),
 
+  unpublishNode: (id: string) => request<Node>(`/nodes/${id}/unpublish`, { method: 'POST' }),
+
   scrape: (url: string) =>
     request<ScrapeResult>('/scrape', { method: 'POST', body: JSON.stringify({ url }) }),
 }

@@ -16,7 +16,7 @@ function ScrapeSection({ form, onResult }: { form: FormInstance; onResult: (text
   )
 }
 import {
-  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined
+  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined, StopOutlined
 } from '@ant-design/icons'
 import { api, type Node, type NodeCreate } from '../api/client'
 import ScrapeButton from './ScrapeButton'
@@ -101,10 +101,22 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
     if (!nodeId) return
     try {
       await api.deleteNode(nodeId)
-      message.success('Nó removido')
+      message.success('Nó deletado')
       onDeleted()
     } catch (e: unknown) {
-      message.error(e instanceof Error ? e.message : 'Erro ao remover')
+      message.error(e instanceof Error ? e.message : 'Erro ao deletar')
+    }
+  }
+
+  async function unpublish() {
+    if (!nodeId) return
+    try {
+      const updated = await api.unpublishNode(nodeId)
+      setNode(updated)
+      form.setFieldValue('status', updated.status)
+      message.success('Removido do RAG e arquivado')
+    } catch (e: unknown) {
+      message.error(e instanceof Error ? e.message : 'Erro ao remover do RAG')
     }
   }
 
@@ -170,8 +182,13 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
               <Button icon={<SendOutlined />} onClick={publish} loading={publishing}>
                 Publicar no RAG
               </Button>
-              <Popconfirm title="Remover este nó?" onConfirm={deleteNode}>
-                <Button danger icon={<DeleteOutlined />}>Remover</Button>
+              {node?.status === 'active' && (
+                <Popconfirm title="Remover do RAG e arquivar o nó?" onConfirm={unpublish}>
+                  <Button icon={<StopOutlined />}>Remover do RAG</Button>
+                </Popconfirm>
+              )}
+              <Popconfirm title="Deletar este nó permanentemente?" onConfirm={deleteNode}>
+                <Button danger icon={<DeleteOutlined />}>Deletar</Button>
               </Popconfirm>
             </>
           )}

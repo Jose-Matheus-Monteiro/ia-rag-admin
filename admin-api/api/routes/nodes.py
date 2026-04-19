@@ -135,3 +135,11 @@ async def publish_node(node_id: uuid.UUID, svc: NodeService = Depends(get_node_s
         return await svc.publish(node_id)
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+@router.post("/{node_id}/unpublish")
+async def unpublish_node(node_id: uuid.UUID, svc: NodeService = Depends(get_node_service)):
+    try:
+        return _serialize(await svc.unpublish(node_id))
+    except ValueError as e:
+        raise HTTPException(400, str(e))

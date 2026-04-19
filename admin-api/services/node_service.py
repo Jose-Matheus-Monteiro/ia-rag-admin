@@ -65,6 +65,16 @@ class NodeService:
                           published_at=datetime.now(timezone.utc))
         return {"path_label": path_label, "chunks": result.get("chunks")}
 
+    async def unpublish(self, node_id: uuid.UUID) -> Node:
+        node = self.get(node_id)
+        if node.status != NodeStatus.active:
+            raise ValueError("Nó não está publicado.")
+        path_label = self.build_path_label(node)
+        await self._publisher.unpublish(path_label)
+        return self._repo.update(node, change_note="Removido do RAG",
+                                 status=NodeStatus.archived,
+                                 published_at=None)
+
     def list_versions(self, node_id: uuid.UUID):
         self.get(node_id)
         return self._repo.list_versions(node_id)
