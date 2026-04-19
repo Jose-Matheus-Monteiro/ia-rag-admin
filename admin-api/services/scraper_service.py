@@ -87,8 +87,16 @@ def _extract_confluence(html: str) -> str:
     pos = html.find('class="wiki-content">')
     if pos == -1:
         return ""
+
+    title = ""
+    m = re.search(r'ajs-page-title[^>]+content="([^"]+)"', html)
+    if m:
+        title = m.group(1).strip()
+
     chunk = html[pos + len('class="wiki-content">'):]
-    return _html_to_text(chunk)
+    body = _html_to_text(chunk)
+
+    return f"{title}\n{body}" if title else body
 
 
 class ScraperService:
