@@ -35,6 +35,7 @@ def _serialize(node) -> dict:
         "version": node.version,
         "created_at": node.created_at.isoformat() if node.created_at else None,
         "updated_at": node.updated_at.isoformat() if node.updated_at else None,
+        "published_at": node.published_at.isoformat() if node.published_at else None,
         "has_children": len(node.children) > 0,
     }
 

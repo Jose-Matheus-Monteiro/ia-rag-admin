@@ -83,6 +83,7 @@ export interface Node {
   version: number
   created_at: string | null
   updated_at: string | null
+  published_at: string | null
   has_children: boolean
   children?: Node[]
 }

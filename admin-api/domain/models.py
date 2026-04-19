@@ -34,6 +34,7 @@ class Node(Base):
     version = Column(Integer, default=1, nullable=False)
     created_at = Column(DateTime(timezone=True), default=_now)
     updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now)
+    published_at = Column(DateTime(timezone=True), nullable=True)
 
     parent = relationship("Node", remote_side=[id], back_populates="children")
     children = relationship("Node", back_populates="parent", cascade="all, delete-orphan")

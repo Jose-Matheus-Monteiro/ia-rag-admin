@@ -189,6 +189,9 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
             {node.updated_at && node.updated_at !== node.created_at && (
               <span>Atualizado: <strong>{new Date(node.updated_at).toLocaleString('pt-BR')}</strong></span>
             )}
+            {node.published_at && (
+              <span>Indexado em: <strong>{new Date(node.published_at).toLocaleString('pt-BR')}</strong></span>
+            )}
           </Space>
         </div>
       )}

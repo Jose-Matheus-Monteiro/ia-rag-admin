@@ -59,7 +59,10 @@ class NodeService:
         node = self.get(node_id)
         path_label = self.build_path_label(node)
         result = await self._publisher.publish(node, path_label)
-        self._repo.update(node, change_note="Publicado para RAG", status=NodeStatus.active)
+        from datetime import datetime, timezone
+        self._repo.update(node, change_note="Publicado para RAG",
+                          status=NodeStatus.active,
+                          published_at=datetime.now(timezone.utc))
         return {"path_label": path_label, "chunks": result.get("chunks")}
 
     def list_versions(self, node_id: uuid.UUID):
