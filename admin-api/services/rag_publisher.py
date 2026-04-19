@@ -16,3 +16,11 @@ class RagPublisher:
             )
             response.raise_for_status()
             return response.json()
+
+    async def unpublish(self, path_label: str) -> None:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.delete(
+                f"{settings.rag_api_url}/documents/{path_label}",
+            )
+            if response.status_code not in (200, 404):
+                response.raise_for_status()

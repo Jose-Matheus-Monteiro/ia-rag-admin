@@ -91,9 +91,9 @@ def update_node(node_id: uuid.UUID, body: NodeUpdate, svc: NodeService = Depends
 
 
 @router.delete("/{node_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_node(node_id: uuid.UUID, svc: NodeService = Depends(get_node_service)):
+async def delete_node(node_id: uuid.UUID, svc: NodeService = Depends(get_node_service)):
     try:
-        svc.delete(node_id)
+        await svc.delete(node_id)
     except ValueError as e:
         raise HTTPException(404, str(e))
 

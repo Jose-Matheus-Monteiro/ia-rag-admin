@@ -31,8 +31,11 @@ class NodeService:
         node = self.get(node_id)
         return self._repo.update(node, change_note=change_note, **fields)
 
-    def delete(self, node_id: uuid.UUID) -> None:
+    async def delete(self, node_id: uuid.UUID) -> None:
         node = self.get(node_id)
+        if node.status == NodeStatus.active:
+            path_label = self.build_path_label(node)
+            await self._publisher.unpublish(path_label)
         self._repo.delete(node)
 
     def restore_version(self, node_id: uuid.UUID, version: int) -> Node:
