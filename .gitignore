@@ -1,0 +1,17 @@
+# Python
+admin-api/.venv/
+admin-api/__pycache__/
+admin-api/**/__pycache__/
+admin-api/*.pyc
+admin-api/alembic/versions/__pycache__/
+
+# Node
+admin-ui/node_modules/
+admin-ui/dist/
+
+# Env
+.env
+
+# DB / OS
+*.db
+.DS_Store

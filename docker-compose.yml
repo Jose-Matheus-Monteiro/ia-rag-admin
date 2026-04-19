@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: rag_admin
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  api:
+    build: ./admin-api
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://admin:admin@postgres:5432/rag_admin
+      JWT_SECRET: changeme
+      RAG_API_URL: http://host.docker.internal:8001
+    depends_on:
+      - postgres
+    volumes:
+      - ./admin-api:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8002 --reload
+
+  ui:
+    build: ./admin-ui
+    ports:
+      - "5174:5173"
+    volumes:
+      - ./admin-ui:/app
+      - /app/node_modules
+    environment:
+      VITE_API_URL: http://localhost:8002
+
+volumes:
+  postgres_data:
