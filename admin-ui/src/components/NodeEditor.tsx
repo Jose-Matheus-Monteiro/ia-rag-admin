@@ -113,6 +113,8 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
     setPublishing(true)
     try {
       await api.publishNode(nodeId)
+      const updated = await api.getNode(nodeId)
+      setNode(updated)
       message.success('Publicado no RAG')
     } catch (e: unknown) {
       message.error(e instanceof Error ? e.message : 'Erro ao publicar')
