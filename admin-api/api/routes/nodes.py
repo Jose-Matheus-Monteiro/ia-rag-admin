@@ -1,5 +1,6 @@
 import uuid
 
+from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 
@@ -12,12 +13,16 @@ router = APIRouter(prefix="/nodes", tags=["nodes"], dependencies=[Depends(requir
 class NodeCreate(BaseModel):
     name: str
     parent_id: uuid.UUID | None = None
+    description: str | None = None
+    tags: List[str] | None = None
     text_content: str | None = None
     source_url: str | None = None
 
 
 class NodeUpdate(BaseModel):
     name: str | None = None
+    description: str | None = None
+    tags: List[str] | None = None
     text_content: str | None = None
     source_url: str | None = None
     status: str | None = None
@@ -29,6 +34,8 @@ def _serialize(node) -> dict:
         "id": str(node.id),
         "parent_id": str(node.parent_id) if node.parent_id else None,
         "name": node.name,
+        "description": node.description,
+        "tags": node.tags or [],
         "text_content": node.text_content,
         "source_url": node.source_url,
         "status": node.status,
@@ -67,6 +74,8 @@ def create_node(body: NodeCreate, svc: NodeService = Depends(get_node_service)):
     node = svc.create(
         name=body.name,
         parent_id=body.parent_id,
+        description=body.description,
+        tags=body.tags,
         text_content=body.text_content,
         source_url=body.source_url,
     )

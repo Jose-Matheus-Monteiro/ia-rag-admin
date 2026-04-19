@@ -6,7 +6,7 @@ from sqlalchemy import (
     Column, String, Text, Integer, ForeignKey,
     DateTime, Enum
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, ARRAY
 from sqlalchemy.orm import relationship
 
 from core.database import Base
@@ -28,6 +28,8 @@ class Node(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     parent_id = Column(UUID(as_uuid=True), ForeignKey("nodes.id"), nullable=True)
     name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    tags = Column(ARRAY(String), nullable=True, default=list)
     text_content = Column(Text, nullable=True)
     source_url = Column(Text, nullable=True)
     status = Column(Enum(NodeStatus), default=NodeStatus.draft, nullable=False)

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Tree, Button, Spin, message } from 'antd'
-import { PlusOutlined } from '@ant-design/icons'
+import { Tree, Button, Spin, Tooltip, message } from 'antd'
+import { PlusOutlined, InfoCircleOutlined } from '@ant-design/icons'
 import type { DataNode } from 'antd/es/tree'
 import { api, type Node } from '../api/client'
 
@@ -11,10 +11,22 @@ interface Props {
   refreshTrigger: number
 }
 
+function nodeTitle(n: Node) {
+  if (!n.description) return n.name
+  return (
+    <span>
+      {n.name}
+      <Tooltip title={n.description}>
+        <InfoCircleOutlined style={{ marginLeft: 5, color: '#8c8c8c', fontSize: 12 }} />
+      </Tooltip>
+    </span>
+  )
+}
+
 function toTreeData(nodes: Node[]): DataNode[] {
   return nodes.map((n) => ({
     key: n.id,
-    title: n.name,
+    title: nodeTitle(n),
     isLeaf: !n.has_children && (!n.children || n.children.length === 0),
     children: n.children ? toTreeData(n.children) : undefined,
   }))

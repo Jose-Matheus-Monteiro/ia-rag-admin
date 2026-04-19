@@ -37,10 +37,13 @@ class NodeRepository:
         return [nodes[str(i)] for i in ids if str(i) in nodes]
 
     def create(self, name: str, parent_id: uuid.UUID | None = None,
+               description: str | None = None, tags: list | None = None,
                text_content: str | None = None, source_url: str | None = None) -> Node:
         node = Node(
             name=name,
             parent_id=parent_id,
+            description=description,
+            tags=tags or [],
             text_content=text_content,
             source_url=source_url,
         )

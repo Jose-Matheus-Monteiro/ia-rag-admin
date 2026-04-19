@@ -55,6 +55,8 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
         setNode(n)
         form.setFieldsValue({
           name: n.name,
+          description: n.description ?? '',
+          tags: n.tags ?? [],
           text_content: n.text_content ?? '',
           source_url: n.source_url ?? '',
           status: n.status,
@@ -72,6 +74,8 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
         const body: NodeCreate = {
           name: values.name,
           parent_id: parentId ?? null,
+          description: values.description || null,
+          tags: (values as Record<string, unknown>).tags as string[] || [],
           text_content: values.text_content || null,
           source_url: values.source_url || null,
         }
@@ -81,6 +85,8 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
       } else if (nodeId) {
         const updated = await api.updateNode(nodeId, {
           name: values.name,
+          description: values.description || null,
+          tags: (values as Record<string, unknown>).tags as string[] || [],
           text_content: values.text_content || null,
           source_url: values.source_url || null,
           status: values.status,
@@ -145,6 +151,14 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
     <Form form={form} layout="vertical" onFinish={onFinish}>
       <Form.Item name="name" label="Nome" rules={[{ required: true }]}>
         <Input />
+      </Form.Item>
+
+      <Form.Item name="description" label="Descrição">
+        <Input placeholder="Descrição breve para exibir como tooltip na árvore" />
+      </Form.Item>
+
+      <Form.Item name="tags" label="Marcadores">
+        <Select mode="tags" placeholder="@tlpp, @classe, ..." tokenSeparators={[',']} />
       </Form.Item>
 
       <Form.Item label="URL da fonte" style={{ marginBottom: 4 }}>

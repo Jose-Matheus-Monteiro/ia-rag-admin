@@ -79,6 +79,8 @@ export interface Node {
   id: string
   parent_id: string | null
   name: string
+  description: string | null
+  tags: string[]
   text_content: string | null
   source_url: string | null
   status: 'draft' | 'active' | 'archived'
@@ -93,12 +95,16 @@ export interface Node {
 export interface NodeCreate {
   name: string
   parent_id?: string | null
+  description?: string | null
+  tags?: string[]
   text_content?: string | null
   source_url?: string | null
 }
 
 export interface NodeUpdate {
   name?: string
+  description?: string | null
+  tags?: string[]
   text_content?: string | null
   source_url?: string | null
   status?: string
