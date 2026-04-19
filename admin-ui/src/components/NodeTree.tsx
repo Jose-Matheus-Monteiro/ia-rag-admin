@@ -23,6 +23,7 @@ function toTreeData(nodes: Node[]): DataNode[] {
 export default function NodeTree({ selectedId, onSelect, onCreateRoot, refreshTrigger }: Props) {
   const [treeData, setTreeData] = useState<DataNode[]>([])
   const [loading, setLoading] = useState(false)
+  const [expandedKeys, setExpandedKeys] = useState<string[]>([])
 
   async function loadTree() {
     setLoading(true)
@@ -65,6 +66,8 @@ export default function NodeTree({ selectedId, onSelect, onCreateRoot, refreshTr
           treeData={treeData}
           loadData={onLoadData}
           selectedKeys={selectedId ? [selectedId] : []}
+          expandedKeys={expandedKeys}
+          onExpand={(keys) => setExpandedKeys(keys as string[])}
           onSelect={(keys) => keys.length && onSelect(keys[0] as string)}
           blockNode
         />
