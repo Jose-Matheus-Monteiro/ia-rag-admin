@@ -18,6 +18,19 @@ def _html_to_text(chunk: str) -> str:
     chunk = re.sub(r'<script[\s\S]*?</script>', '', chunk)
     chunk = re.sub(r'<style[\s\S]*?</style>', '', chunk)
 
+    # blocos de código → delimitados
+    def _code_block(m: re.Match) -> str:
+        code = re.sub(r'&quot;', '"', m.group(1))
+        code = re.sub(r'&amp;', '&', code)
+        code = re.sub(r'&#[0-9]+;', '', code)
+        code = re.sub(r'<[^>]+>', '', code).strip()
+        return f'\n[código]\n{code}\n[/código]\n'
+
+    chunk = re.sub(
+        r'<pre[^>]*class="syntaxhighlighter-pre"[^>]*>([\s\S]*?)</pre>',
+        _code_block, chunk
+    )
+
     # imagens → texto do alt
     chunk = re.sub(r'<img[^>]+alt=["\']([^"\']+)["\'][^>]*/?>',
                    lambda m: m.group(1), chunk)
