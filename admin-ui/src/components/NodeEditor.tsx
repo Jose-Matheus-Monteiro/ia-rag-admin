@@ -157,6 +157,17 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
     const ragContent = values.rag_content as string ?? ''
     const needsConversion = textContent.trim() && !ragContent.trim()
 
+    const proceed = (vals: Record<string, unknown>) => {
+      const wasActive = node?.status === 'active'
+      const contentChanged =
+        node && (node.text_content !== vals.text_content || node.rag_content !== vals.rag_content)
+      doSave(vals).then(() => {
+        if (wasActive && contentChanged) {
+          message.warning('Conteúdo alterado. Lembre-se de re-publicar no RAG para atualizar o índice.', 6)
+        }
+      })
+    }
+
     if (needsConversion) {
       Modal.confirm({
         title: 'Texto para RAG vazio',
@@ -166,14 +177,14 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
         onOk: () => {
           const converted = convertToRagText(textContent)
           form.setFieldValue('rag_content', converted)
-          doSave({ ...values, rag_content: converted })
+          proceed({ ...values, rag_content: converted })
         },
-        onCancel: () => doSave(values),
+        onCancel: () => proceed(values),
       })
       return
     }
 
-    await doSave(values)
+    proceed(values)
   }
 
   async function deleteNode() {
@@ -201,6 +212,11 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
 
   async function publish() {
     if (!nodeId) return
+    const ragContent = form.getFieldValue('rag_content') as string ?? ''
+    if (!ragContent.trim()) {
+      message.error('Preencha o campo "Texto para RAG" antes de publicar. Use o botão "Converter para RAG".')
+      return
+    }
     setPublishing(true)
     try {
       await api.publishNode(nodeId)

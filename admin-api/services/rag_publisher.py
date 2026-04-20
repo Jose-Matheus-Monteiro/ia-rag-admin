@@ -6,9 +6,9 @@ from domain.models import Node
 
 class RagPublisher:
     async def publish(self, node: Node, path_label: str) -> dict:
-        text = node.rag_content or node.text_content
-        if not text:
-            raise ValueError("Nó não tem texto para publicar.")
+        if not node.rag_content:
+            raise ValueError("Converta o texto para RAG antes de publicar.")
+        text = node.rag_content
 
         async with httpx.AsyncClient(timeout=60) as client:
             response = await client.post(

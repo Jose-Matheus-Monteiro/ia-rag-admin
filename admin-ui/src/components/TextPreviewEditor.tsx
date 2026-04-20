@@ -53,19 +53,82 @@ export function scrapedTextToMarkdown(text: string): string {
 
 export function convertToRagText(markdown: string): string {
   if (!markdown) return ''
-  return markdown
-    .replace(/```[\w]*\n?([\s\S]*?)```/g, '$1')
-    .replace(/\|[-: ]+\|[-| :]*\n/g, '')
-    .replace(/\|(.+)\|/g, (_, inner) =>
-      inner.split('|').map((c: string) => c.trim()).filter(Boolean).join('  ')
-    )
-    .replace(/^#{1,6}\s+/gm, '')
-    .replace(/\*\*(.+?)\*\*/g, '$1')
-    .replace(/\*(.+?)\*/g, '$1')
-    .replace(/`(.+?)`/g, '$1')
-    .replace(/\[(.+?)\]\(.+?\)/g, '$1')
-    .replace(/\n{3,}/g, '\n\n')
-    .trim()
+
+  const lines = markdown.split('\n')
+  const out: string[] = []
+  let inCode = false
+  let codeLang = ''
+  let tableLines: string[] = []
+  let tableHeaders: string[] = []
+
+  function parseRow(line: string): string[] {
+    return line.split('|').map((c) => c.trim()).filter(Boolean)
+  }
+
+  function flushTable() {
+    if (tableLines.length === 0) return
+    const dataRows = tableLines.filter((l) => !/^\s*\|?[-: |]+\|?\s*$/.test(l))
+    if (tableHeaders.length > 0) {
+      dataRows.forEach((row) => {
+        const cells = parseRow(row)
+        const formatted = cells
+          .map((c, i) => (tableHeaders[i] ? `${tableHeaders[i]}: ${c}` : c))
+          .join(' | ')
+        out.push(formatted)
+      })
+    } else {
+      dataRows.forEach((row) => out.push(parseRow(row).join(' | ')))
+    }
+    tableLines = []
+    tableHeaders = []
+  }
+
+  for (const line of lines) {
+    const codeStart = line.match(/^```(\w*)/)
+    if (codeStart && !inCode) {
+      flushTable()
+      inCode = true
+      codeLang = codeStart[1] || ''
+      out.push(codeLang ? `[código ${codeLang}]` : '[código]')
+      continue
+    }
+    if (line.match(/^```/) && inCode) {
+      out.push('[/código]')
+      inCode = false
+      codeLang = ''
+      continue
+    }
+    if (inCode) {
+      out.push(line)
+      continue
+    }
+
+    if (line.trimStart().startsWith('|')) {
+      if (/^\s*\|?[-: |]+\|?\s*$/.test(line)) {
+        if (tableLines.length > 0) {
+          tableHeaders = parseRow(tableLines[tableLines.length - 1])
+          tableLines.pop()
+        }
+        continue
+      }
+      tableLines.push(line)
+      continue
+    }
+    flushTable()
+
+    let p = line
+      .replace(/^#{1,6}\s+/, '')
+      .replace(/\*\*(.+?)\*\*/g, '$1')
+      .replace(/\*(.+?)\*/g, '$1')
+      .replace(/`(.+?)`/g, '$1')
+      .replace(/\[(.+?)\]\(.+?\)/g, '$1')
+      .replace(/^[-*+]\s+/, '• ')
+      .replace(/^\d+\.\s+/, (m) => m)
+    out.push(p)
+  }
+  flushTable()
+
+  return out.join('\n').replace(/\n{3,}/g, '\n\n').trim()
 }
 
 interface Props {
