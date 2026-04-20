@@ -20,9 +20,8 @@ import {
 } from '@ant-design/icons'
 import { api, type Node, type NodeCreate } from '../api/client'
 import ScrapeButton from './ScrapeButton'
+import TextPreviewEditor from './TextPreviewEditor'
 import VersionHistory from './VersionHistory'
-
-const { TextArea } = Input
 
 interface Props {
   nodeId: string | null
@@ -165,8 +164,8 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
         <ScrapeSection form={form} onResult={(text) => form.setFieldValue('text_content', text)} />
       </Form.Item>
 
-      <Form.Item name="text_content" label="Conteúdo de texto">
-        <TextArea rows={8} />
+      <Form.Item label="Conteúdo de texto">
+        <TextPreviewEditor form={form} />
       </Form.Item>
 
       <Form.Item name="status" label="Status">
