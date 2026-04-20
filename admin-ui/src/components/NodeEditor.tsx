@@ -4,12 +4,54 @@ import {
   Button, Form, Input, Select, Space, Tabs, Popconfirm, message, Spin, Tag, Modal
 } from 'antd'
 import {
-  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined, StopOutlined
+  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined, StopOutlined, SwapOutlined
 } from '@ant-design/icons'
 import { api, type Node, type NodeCreate } from '../api/client'
 import ScrapeButton from './ScrapeButton'
-import TextPreviewEditor, { convertToRagText } from './TextPreviewEditor'
+import TextPreviewEditor, { convertToRagText, scrapedTextToMarkdown } from './TextPreviewEditor'
 import VersionHistory from './VersionHistory'
+
+function RagContentSection({ form }: { form: FormInstance }) {
+  const textContent = Form.useWatch('text_content', form) ?? ''
+  const ragContent = Form.useWatch('rag_content', form) ?? ''
+  const needsConversion = textContent.trim() && !ragContent.trim()
+
+  function handleConvert() {
+    form.setFieldValue('rag_content', convertToRagText(textContent))
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
+        <Button
+          icon={<SwapOutlined />}
+          onClick={handleConvert}
+          type={needsConversion ? 'primary' : 'default'}
+          ghost={needsConversion}
+          size="small"
+        >
+          Converter para RAG
+        </Button>
+        <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
+      </div>
+      <div style={{
+        padding: '4px 10px', background: '#fafafa',
+        border: '1px solid #d9d9d9', borderBottom: 'none',
+        borderRadius: '6px 6px 0 0', fontSize: 12, color: '#595959', fontWeight: 500,
+      }}>
+        Texto para RAG
+      </div>
+      <Form.Item name="rag_content" noStyle>
+        <Input.TextArea
+          rows={8}
+          placeholder="Clique em 'Converter para RAG' ou escreva diretamente aqui"
+          style={{ borderRadius: '0 0 6px 6px', fontSize: 13 }}
+        />
+      </Form.Item>
+    </div>
+  )
+}
 
 function ScrapeSection({ form, onResult }: { form: FormInstance; onResult: (text: string) => void }) {
   const sourceUrl = Form.useWatch('source_url', form) ?? ''
@@ -68,7 +110,7 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
   }, [nodeId, mode, form])
 
   function handleScrapeResult(text: string) {
-    form.setFieldsValue({ text_content: text, rag_content: '' })
+    form.setFieldsValue({ text_content: scrapedTextToMarkdown(text), rag_content: '' })
   }
 
   async function doSave(values: Record<string, unknown>) {
@@ -113,12 +155,12 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
   async function onFinish(values: Record<string, unknown>) {
     const textContent = values.text_content as string ?? ''
     const ragContent = values.rag_content as string ?? ''
-    const hasMarkers = textContent.includes('[código]') || textContent.includes('[/código]')
+    const needsConversion = textContent.trim() && !ragContent.trim()
 
-    if (hasMarkers && !ragContent.trim()) {
+    if (needsConversion) {
       Modal.confirm({
-        title: 'Texto não convertido',
-        content: 'O texto fonte contém marcadores e o campo "Texto para RAG" está vazio. Converter automaticamente antes de salvar?',
+        title: 'Texto para RAG vazio',
+        content: 'O campo "Texto para RAG" está vazio. Converter automaticamente o Markdown para texto puro antes de salvar?',
         okText: 'Converter e salvar',
         cancelText: 'Salvar assim mesmo',
         onOk: () => {
@@ -198,6 +240,10 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
 
       <Form.Item label="Conteúdo">
         <TextPreviewEditor form={form} />
+      </Form.Item>
+
+      <Form.Item>
+        <RagContentSection form={form} />
       </Form.Item>
 
       <Form.Item name="status" label="Status">
