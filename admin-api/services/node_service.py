@@ -25,8 +25,9 @@ class NodeService:
 
     def create(self, name: str, parent_id: uuid.UUID | None = None,
                description: str | None = None, tags: list | None = None,
-               text_content: str | None = None, source_url: str | None = None) -> Node:
-        return self._repo.create(name, parent_id, description, tags, text_content, source_url)
+               text_content: str | None = None, rag_content: str | None = None,
+               source_url: str | None = None) -> Node:
+        return self._repo.create(name, parent_id, description, tags, text_content, rag_content, source_url)
 
     def update(self, node_id: uuid.UUID, change_note: str | None = None, **fields) -> Node:
         node = self.get(node_id)

@@ -1,8 +1,15 @@
 import { useEffect, useState } from 'react'
 import type { FormInstance } from 'antd'
 import {
-  Button, Form, Input, Select, Space, Tabs, Popconfirm, message, Spin, Tag
+  Button, Form, Input, Select, Space, Tabs, Popconfirm, message, Spin, Tag, Modal
 } from 'antd'
+import {
+  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined, StopOutlined
+} from '@ant-design/icons'
+import { api, type Node, type NodeCreate } from '../api/client'
+import ScrapeButton from './ScrapeButton'
+import TextPreviewEditor, { convertToRagText } from './TextPreviewEditor'
+import VersionHistory from './VersionHistory'
 
 function ScrapeSection({ form, onResult }: { form: FormInstance; onResult: (text: string) => void }) {
   const sourceUrl = Form.useWatch('source_url', form) ?? ''
@@ -15,13 +22,6 @@ function ScrapeSection({ form, onResult }: { form: FormInstance; onResult: (text
     </Space.Compact>
   )
 }
-import {
-  SaveOutlined, DeleteOutlined, SendOutlined, PlusOutlined, HistoryOutlined, StopOutlined
-} from '@ant-design/icons'
-import { api, type Node, type NodeCreate } from '../api/client'
-import ScrapeButton from './ScrapeButton'
-import TextPreviewEditor from './TextPreviewEditor'
-import VersionHistory from './VersionHistory'
 
 interface Props {
   nodeId: string | null
@@ -57,6 +57,7 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
           description: n.description ?? '',
           tags: n.tags ?? [],
           text_content: n.text_content ?? '',
+          rag_content: n.rag_content ?? '',
           source_url: n.source_url ?? '',
           status: n.status,
           change_note: '',
@@ -66,30 +67,37 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
       .finally(() => setLoading(false))
   }, [nodeId, mode, form])
 
-  async function onFinish(values: Record<string, string>) {
+  function handleScrapeResult(text: string) {
+    form.setFieldsValue({ text_content: text, rag_content: '' })
+  }
+
+  async function doSave(values: Record<string, unknown>) {
     setSaving(true)
     try {
+      const tags = values.tags as string[] || []
       if (mode === 'create') {
         const body: NodeCreate = {
-          name: values.name,
+          name: values.name as string,
           parent_id: parentId ?? null,
-          description: values.description || null,
-          tags: (values as Record<string, unknown>).tags as string[] || [],
-          text_content: values.text_content || null,
-          source_url: values.source_url || null,
+          description: (values.description as string) || null,
+          tags,
+          text_content: (values.text_content as string) || null,
+          rag_content: (values.rag_content as string) || null,
+          source_url: (values.source_url as string) || null,
         }
         const created = await api.createNode(body)
         message.success('Nó criado')
         onSaved(created.id)
       } else if (nodeId) {
         const updated = await api.updateNode(nodeId, {
-          name: values.name,
-          description: values.description || null,
-          tags: (values as Record<string, unknown>).tags as string[] || [],
-          text_content: values.text_content || null,
-          source_url: values.source_url || null,
-          status: values.status,
-          change_note: values.change_note || undefined,
+          name: values.name as string,
+          description: (values.description as string) || null,
+          tags,
+          text_content: (values.text_content as string) || null,
+          rag_content: (values.rag_content as string) || null,
+          source_url: (values.source_url as string) || null,
+          status: values.status as string,
+          change_note: (values.change_note as string) || undefined,
         })
         setNode(updated)
         message.success('Salvo')
@@ -100,6 +108,30 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
     } finally {
       setSaving(false)
     }
+  }
+
+  async function onFinish(values: Record<string, unknown>) {
+    const textContent = values.text_content as string ?? ''
+    const ragContent = values.rag_content as string ?? ''
+    const hasMarkers = textContent.includes('[código]') || textContent.includes('[/código]')
+
+    if (hasMarkers && !ragContent.trim()) {
+      Modal.confirm({
+        title: 'Texto não convertido',
+        content: 'O texto fonte contém marcadores e o campo "Texto para RAG" está vazio. Converter automaticamente antes de salvar?',
+        okText: 'Converter e salvar',
+        cancelText: 'Salvar assim mesmo',
+        onOk: () => {
+          const converted = convertToRagText(textContent)
+          form.setFieldValue('rag_content', converted)
+          doSave({ ...values, rag_content: converted })
+        },
+        onCancel: () => doSave(values),
+      })
+      return
+    }
+
+    await doSave(values)
   }
 
   async function deleteNode() {
@@ -161,10 +193,10 @@ export default function NodeEditor({ nodeId, parentId, mode, onSaved, onDeleted,
       </Form.Item>
 
       <Form.Item label="URL da fonte" style={{ marginBottom: 4 }}>
-        <ScrapeSection form={form} onResult={(text) => form.setFieldValue('text_content', text)} />
+        <ScrapeSection form={form} onResult={handleScrapeResult} />
       </Form.Item>
 
-      <Form.Item label="Conteúdo de texto">
+      <Form.Item label="Conteúdo">
         <TextPreviewEditor form={form} />
       </Form.Item>
 

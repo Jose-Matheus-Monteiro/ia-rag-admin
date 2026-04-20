@@ -16,6 +16,7 @@ class NodeCreate(BaseModel):
     description: str | None = None
     tags: List[str] | None = None
     text_content: str | None = None
+    rag_content: str | None = None
     source_url: str | None = None
 
 
@@ -24,6 +25,7 @@ class NodeUpdate(BaseModel):
     description: str | None = None
     tags: List[str] | None = None
     text_content: str | None = None
+    rag_content: str | None = None
     source_url: str | None = None
     status: str | None = None
     change_note: str | None = None
@@ -37,6 +39,7 @@ def _serialize(node) -> dict:
         "description": node.description,
         "tags": node.tags or [],
         "text_content": node.text_content,
+        "rag_content": node.rag_content,
         "source_url": node.source_url,
         "status": node.status,
         "version": node.version,
@@ -77,6 +80,7 @@ def create_node(body: NodeCreate, svc: NodeService = Depends(get_node_service)):
         description=body.description,
         tags=body.tags,
         text_content=body.text_content,
+        rag_content=body.rag_content,
         source_url=body.source_url,
     )
     return _serialize(node)

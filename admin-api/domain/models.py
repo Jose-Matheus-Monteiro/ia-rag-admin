@@ -31,6 +31,7 @@ class Node(Base):
     description = Column(Text, nullable=True)
     tags = Column(ARRAY(String), nullable=True, default=list)
     text_content = Column(Text, nullable=True)
+    rag_content = Column(Text, nullable=True)
     source_url = Column(Text, nullable=True)
     status = Column(Enum(NodeStatus), default=NodeStatus.draft, nullable=False)
     version = Column(Integer, default=1, nullable=False)

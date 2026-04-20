@@ -82,6 +82,7 @@ export interface Node {
   description: string | null
   tags: string[]
   text_content: string | null
+  rag_content: string | null
   source_url: string | null
   status: 'draft' | 'active' | 'archived'
   version: number
@@ -98,6 +99,7 @@ export interface NodeCreate {
   description?: string | null
   tags?: string[]
   text_content?: string | null
+  rag_content?: string | null
   source_url?: string | null
 }
 
@@ -106,6 +108,7 @@ export interface NodeUpdate {
   description?: string | null
   tags?: string[]
   text_content?: string | null
+  rag_content?: string | null
   source_url?: string | null
   status?: string
   change_note?: string

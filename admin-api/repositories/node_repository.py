@@ -38,13 +38,15 @@ class NodeRepository:
 
     def create(self, name: str, parent_id: uuid.UUID | None = None,
                description: str | None = None, tags: list | None = None,
-               text_content: str | None = None, source_url: str | None = None) -> Node:
+               text_content: str | None = None, rag_content: str | None = None,
+               source_url: str | None = None) -> Node:
         node = Node(
             name=name,
             parent_id=parent_id,
             description=description,
             tags=tags or [],
             text_content=text_content,
+            rag_content=rag_content,
             source_url=source_url,
         )
         self._db.add(node)

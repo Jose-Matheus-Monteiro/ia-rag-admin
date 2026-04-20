@@ -1,5 +1,5 @@
 import type { FormInstance } from 'antd'
-import { Button, Form } from 'antd'
+import { Button, Form, Tabs } from 'antd'
 import { Input } from 'antd'
 import { SwapOutlined } from '@ant-design/icons'
 
@@ -9,7 +9,7 @@ function escapeHtml(str: string): string {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function renderPreview(text: string): string {
+export function renderPreview(text: string): string {
   if (!text?.trim()) return '<p style="color:#bbb;font-style:italic">Nenhum conteúdo</p>'
 
   const lines = text.split('\n')
@@ -24,10 +24,10 @@ function renderPreview(text: string): string {
     tableLines.forEach((line, i) => {
       const cells = line.split('|').map((c) => c.trim()).filter(Boolean)
       const tag = i === 0 ? 'th' : 'td'
-      const rowStyle = i === 0 ? 'background:#fafafa;font-weight:600' : ''
-      html += `<tr style="${rowStyle}">` + cells.map((c) =>
-        `<${tag} style="border:1px solid #d9d9d9;padding:4px 10px">${c}</${tag}>`
-      ).join('') + '</tr>'
+      const style = i === 0
+        ? 'border:1px solid #d9d9d9;padding:4px 10px;background:#fafafa;font-weight:600'
+        : 'border:1px solid #d9d9d9;padding:4px 10px'
+      html += '<tr>' + cells.map((c) => `<${tag} style="${style}">${escapeHtml(c)}</${tag}>`).join('') + '</tr>'
     })
     html += '</table>'
     tableLines = []
@@ -70,7 +70,7 @@ function renderPreview(text: string): string {
   return html
 }
 
-function convertToRagText(text: string): string {
+export function convertToRagText(text: string): string {
   return text
     .replace(/\[código\]\n?/g, '')
     .replace(/\[\/código\]\n?/g, '')
@@ -83,62 +83,80 @@ interface Props {
 }
 
 export default function TextPreviewEditor({ form }: Props) {
-  const text = Form.useWatch('text_content', form) ?? ''
+  const textContent = Form.useWatch('text_content', form) ?? ''
 
   function handleConvert() {
-    form.setFieldValue('text_content', convertToRagText(text))
+    form.setFieldValue('rag_content', convertToRagText(textContent))
   }
 
-  const hasMarkers = text.includes('[código]') || text.includes('[/código]')
+  const hasMarkers = textContent.includes('[código]') || textContent.includes('[/código]')
+
+  const sourceTab = (
+    <Form.Item name="text_content" noStyle>
+      <TextArea
+        rows={14}
+        style={{ fontFamily: 'monospace', fontSize: 13, borderRadius: '0 0 6px 6px' }}
+      />
+    </Form.Item>
+  )
+
+  const previewTab = (
+    <div
+      style={{
+        border: '1px solid #d9d9d9', borderRadius: '0 0 6px 6px',
+        padding: '10px 14px', minHeight: 200, maxHeight: 380,
+        overflowY: 'auto', fontSize: 14, lineHeight: 1.6, background: '#fff',
+      }}
+      dangerouslySetInnerHTML={{ __html: renderPreview(textContent) }}
+    />
+  )
 
   return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 4, alignItems: 'center' }}>
-        <span style={{ fontSize: 12, color: '#8c8c8c', flex: 1 }}>
-          {hasMarkers && (
-            <span style={{ color: '#fa8c16' }}>⚠ Texto contém marcadores — clique em Converter antes de publicar</span>
-          )}
-        </span>
-        {hasMarkers && (
-          <Button size="small" icon={<SwapOutlined />} onClick={handleConvert}>
-            Converter para RAG
-          </Button>
-        )}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div>
+        <Tabs
+          size="small"
+          style={{ marginBottom: 0 }}
+          items={[
+            { key: 'source', label: 'Editar fonte', children: sourceTab },
+            { key: 'preview', label: 'Preview formatado', children: previewTab },
+          ]}
+        />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{
-            padding: '4px 10px', background: '#fafafa',
-            border: '1px solid #d9d9d9', borderBottom: 'none',
-            borderRadius: '6px 6px 0 0', fontSize: 12, color: '#595959', fontWeight: 500,
-          }}>
-            Editar
-          </div>
-          <Form.Item name="text_content" noStyle>
-            <TextArea
-              rows={18}
-              style={{ borderRadius: '0 0 6px 6px', fontFamily: 'monospace', fontSize: 13, resize: 'vertical' }}
-            />
-          </Form.Item>
-        </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{
-            padding: '4px 10px', background: '#fafafa',
-            border: '1px solid #d9d9d9', borderBottom: 'none',
-            borderRadius: '6px 6px 0 0', fontSize: 12, color: '#595959', fontWeight: 500,
-          }}>
-            Preview
-          </div>
-          <div
-            style={{
-              border: '1px solid #d9d9d9', borderRadius: '0 0 6px 6px',
-              padding: '8px 12px', minHeight: 200, maxHeight: 432, overflowY: 'auto',
-              fontSize: 14, lineHeight: 1.6, background: '#fff',
-            }}
-            dangerouslySetInnerHTML={{ __html: renderPreview(text) }}
-          />
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
+        <Button
+          icon={<SwapOutlined />}
+          onClick={handleConvert}
+          type={hasMarkers ? 'primary' : 'default'}
+          ghost={hasMarkers}
+        >
+          Converter para RAG
+        </Button>
+        {hasMarkers && (
+          <span style={{ color: '#fa8c16', fontSize: 12 }}>
+            ⚠ contém marcadores
+          </span>
+        )}
+        <div style={{ flex: 1, height: 1, background: '#f0f0f0' }} />
+      </div>
+
+      <div>
+        <div style={{
+          padding: '4px 10px', background: '#fafafa',
+          border: '1px solid #d9d9d9', borderBottom: 'none',
+          borderRadius: '6px 6px 0 0', fontSize: 12, color: '#595959', fontWeight: 500,
+        }}>
+          Texto para RAG
         </div>
+        <Form.Item name="rag_content" noStyle>
+          <TextArea
+            rows={10}
+            placeholder="Clique em 'Converter para RAG' para gerar o texto puro, ou escreva diretamente aqui"
+            style={{ borderRadius: '0 0 6px 6px', fontSize: 13 }}
+          />
+        </Form.Item>
       </div>
     </div>
   )
